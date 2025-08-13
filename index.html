@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phenoage Prediction Using AI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .header-icon::before {
+            content: "⚕";
+            font-size: 30px;
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .form-container {
+            padding: 40px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #4facfe;
+            background: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(79, 172, 254, 0.2);
+        }
+        
+        .predict-btn {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 18px 40px;
+            border: none;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .predict-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(79, 172, 254, 0.3);
+        }
+        
+        .predict-btn:active {
+            transform: translateY(-1px);
+        }
+        
+        .results {
+            margin-top: 30px;
+            padding: 40px;
+            background: linear-gradient(135deg, #f8f9ff 0%, #e8f5e8 100%);
+            border-radius: 15px;
+            text-align: center;
+            display: none;
+            border: 2px solid #e0f0ff;
+        }
+        
+        .predicted-age {
+            font-size: 3.5em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+        }
+        
+        .results-text {
+            font-size: 1.3em;
+            color: #666;
+            margin-bottom: 25px;
+            font-weight: 500;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+            color: white;
+            border-radius: 25px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        
+        .details {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        
+        .detail-item {
+            text-align: center;
+        }
+        
+        .detail-label {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+        
+        .detail-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            background: #f8f9ff;
+            border-radius: 15px;
+            margin-top: 30px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4facfe;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading p {
+            color: #666;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .reset-btn {
+            background: transparent;
+            border: 2px solid #4facfe;
+            color: #4facfe;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-left: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .reset-btn:hover {
+            background: #4facfe;
+            color: white;
+        }
+        
+        @media (max-width: 768px) {
+            .form-container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 30px 20px;
+            }
+            
+            .header {
+                padding: 25px 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .predicted-age {
+                font-size: 2.5em;
+            }
+            
+            .details {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+        
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #f44336;
+            display: none;
+        }
+        
+        .form-group.error input {
+            border-color: #f44336;
+            background: #ffebee;
+        }
+        
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            margin-left: 5px;
+            cursor: help;
+        }
+        
+        .tooltip::after {
+            content: "?";
+            background: #4facfe;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .tooltip:hover::before {
+            content: attr(data-tooltip);
+            position: absolute;
+            background: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-icon"></div>
+            <h1>Phenoage Prediction Using AI</h1>
+            <p>Enter biomarker values to predict biological age using advanced machine learning</p>
+        </div>
+        
+        <form id="predictionForm" class="form-container">
+            <div class="form-group">
+                <label for="age_years">
+                    Age (years)
+                    <span class="tooltip" data-tooltip="Chronological age in years"></span>
+                </label>
+                <input type="number" id="age_years" name="age_years" step="0.1" min="0" max="120" placeholder="21" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="albumin_gl">
+                    Albumin (g/L)
+                    <span class="tooltip" data-tooltip="Serum albumin concentration"></span>
+                </label>
+                <input type="number" id="albumin_gl" name="albumin_gl" step="0.1" min="20" max="60" placeholder="46.9" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="creatinine_umoll">
+                    Creatinine (μmol/L)
+                    <span class="tooltip" data-tooltip="Serum creatinine level"></span>
+                </label>
+                <input type="number" id="creatinine_umoll" name="creatinine_umoll" step="0.1" min="40" max="400" placeholder="77.98" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="glucose_mmoll">
+                    Glucose (mmol/L)
+                    <span class="tooltip" data-tooltip="Blood glucose level"></span>
+                </label>
+                <input type="number" id="glucose_mmoll" name="glucose_mmoll" step="0.1" min="3" max="30" placeholder="5.48" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="crp_mgdl">
+                    CRP (mg/dL)
+                    <span class="tooltip" data-tooltip="C-reactive protein level"></span>
+                </label>
+                <input type="number" id="crp_mgdl" name="crp_mgdl" step="0.1" min="0" max="50" placeholder="0.18" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="lymphocyte_percent">
+                    Lymphocyte (%)
+                    <span class="tooltip" data-tooltip="Lymphocyte percentage"></span>
+                </label>
+                <input type="number" id="lymphocyte_percent" name="lymphocyte_percent" step="0.1" min="5" max="60" placeholder="30.78" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="mcv_fl">
+                    MCV (fL)
+                    <span class="tooltip" data-tooltip="Mean corpuscular volume"></span>
+                </label>
+                <input type="number" id="mcv_fl" name="mcv_fl" step="0.1" min="70" max="110" placeholder="89.95" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="rdw_percent">
+                    RDW (%)
+                    <span class="tooltip" data-tooltip="Red blood cell distribution width"></span>
+                </label>
+                <input type="number" id="rdw_percent" name="rdw_percent" step="0.1" min="10" max="25" placeholder="12.15" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="alkp_ul">
+                    ALP (U/L)
+                    <span class="tooltip" data-tooltip="Alkaline phosphatase level"></span>
+                </label>
+                <input type="number" id="alkp_ul" name="alkp_ul" step="0.1" min="30" max="300" placeholder="65.6" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="wbc_10_9l">
+                    WBC (×10^9/L)
+                    <span class="tooltip" data-tooltip="White blood cell count"></span>
+                </label>
+                <input type="number" id="wbc_10_9l" name="wbc_10_9l" step="0.1" min="2" max="20" placeholder="6.65" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="chronic_age">
+                    Chronic Age
+                    <span class="tooltip" data-tooltip="Age adjusted for chronic conditions"></span>
+                </label>
+                <input type="number" id="chronic_age" name="chronic_age" step="0.1" min="0" max="120" placeholder="21" required>
+            </div>
+            
+            <button type="submit" class="predict-btn">Predict Phenoage</button>
+            <button type="button" class="reset-btn" onclick="resetForm()">Reset</button>
+        </form>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Analyzing your biomarkers...</p>
+        </div>
+        
+        <div class="error-message" id="errorMessage"></div>
+        
+        <div class="results" id="results">
+            <div class="predicted-age" id="predictedAge">17.48 years</div>
+            <div class="results-text">Predicted Biological Age</div>
+            <div class="status" id="status">Success</div>
+            
+            <div class="details">
+                <div class="detail-item">
+                    <div class="detail-label">Status</div>
+                    <div class="detail-value" id="detailStatus">Success</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Model Type</div>
+                    <div class="detail-value" id="modelType">AI/ML Prediction</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Processing Time</div>
+                    <div class="detail-value" id="processingTime">< 1 second</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample data for demonstration
+        const sampleData = {
+            age_years: 21,
+            albumin_gl: 46.9,
+            creatinine_umoll: 77.98,
+            glucose_mmoll: 5.48,
+            crp_mgdl: 0.18,
+            lymphocyte_percent: 30.78,
+            mcv_fl: 89.95,
+            rdw_percent: 12.15,
+            alkp_ul: 65.6,
+            wbc_10_9l: 6.65,
+            chronic_age: 21
+        };
+
+        // Load sample data on page load
+        window.addEventListener('load', function() {
+            loadSampleData();
+        });
+
+        function loadSampleData() {
+            for (const [key, value] of Object.entries(sampleData)) {
+                const input = document.getElementById(key);
+                if (input) {
+                    input.value = value;
+                }
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('predictionForm').reset();
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'none';
+            
+            // Remove error classes
+            document.querySelectorAll('.form-group.error').forEach(group => {
+                group.classList.remove('error');
+            });
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function validateForm(data) {
+            const errors = [];
+            
+            if (data.age_years < 0 || data.age_years > 120) {
+                errors.push('Age must be between 0 and 120 years');
+            }
+            if (data.albumin_gl < 20 || data.albumin_gl > 60) {
+                errors.push('Albumin must be between 20 and 60 g/L');
+            }
+            // Add more validation as needed
+            
+            return errors;
+        }
+
+        // Real API call to FastAPI backend
+        async function callAPI(data) {
+            const response = await fetch('/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            return await response.json();
+        }
+
+        document.getElementById('predictionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Hide previous results and errors
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'none';
+            
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            
+            // Collect form data
+            const formData = new FormData(e.target);
+            const data = {};
+            for (let [key, value] of formData.entries()) {
+                data[key] = parseFloat(value);
+            }
+            
+            // Validate data
+            const errors = validateForm(data);
+            if (errors.length > 0) {
+                showError('Validation Error: ' + errors.join(', '));
+                return;
+            }
+            
+            try {
+                // Call the FastAPI backend
+                const result = await callAPI(data);
+                
+                // Hide loading and show results
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('results').style.display = 'block';
+                
+                // Update results
+                document.getElementById('predictedAge').textContent = 
+                    result.predicted_biological_age.toFixed(2) + ' years';
+                document.getElementById('status').textContent = result.status;
+                document.getElementById('detailStatus').textContent = result.status;
+                document.getElementById('modelType').textContent = result.model_type;
+                document.getElementById('processingTime').textContent = result.processing_time;
+                
+                // Scroll to results
+                document.getElementById('results').scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center' 
+                });
+                
+            } catch (error) {
+                showError('Prediction failed: ' + error.message);
+                console.error('API Error:', error);
+            }
+        });
+
+        // Add real-time validation
+        document.querySelectorAll('input[type="number"]').forEach(input => {
+            input.addEventListener('input', function() {
+                const formGroup = this.closest('.form-group');
+                formGroup.classList.remove('error');
+                
+                const min = parseFloat(this.min);
+                const max = parseFloat(this.max);
+                const value = parseFloat(this.value);
+                
+                if (this.value && (value < min || value > max)) {
+                    formGroup.classList.add('error');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
