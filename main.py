@@ -1,21 +1,22 @@
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse, FileResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 import pickle
 import numpy as np
-import pandas as pd
 import time
 import uvicorn
-import os
 
+# ---------------------------------------------------
 # Initialize FastAPI app
-app = FastAPI(title="Phenoage Prediction API", description="Biomarker-based biological age prediction using Aira Mendatory File")
+# ---------------------------------------------------
+app = FastAPI(
+    title="Phenoage Prediction API",
+    description="Biomarker-based biological age prediction using Aira Mandatory File"
+)
 
-# Mount static files (for CSS, JS, etc. if needed)
-# app.mount("/static", StaticFiles(directory="static"), name="static")
-
+# ---------------------------------------------------
 # Load the trained model
+# ---------------------------------------------------
 try:
     with open('model.pkl', 'rb') as f:
         model = pickle.load(f)
@@ -24,7 +25,9 @@ except Exception as e:
     print(f"Error loading model: {e}")
     model = None
 
+# ---------------------------------------------------
 # Load the scaler
+# ---------------------------------------------------
 try:
     with open('scaler.pkl', 'rb') as f:
         scaler = pickle.load(f)
@@ -33,7 +36,9 @@ except Exception as e:
     print(f"Error loading scaler: {e}")
     scaler = None
 
-# Pydantic model for input validation
+# ---------------------------------------------------
+# Pydantic models
+# ---------------------------------------------------
 class BiomarkerInput(BaseModel):
     age_years: float = Field(..., ge=0, le=120)
     albumin_gl: float = Field(..., ge=20, le=60)
@@ -53,12 +58,20 @@ class PredictionResponse(BaseModel):
     model_type: str
     processing_time: str
 
+# ---------------------------------------------------
 # Health check
+# ---------------------------------------------------
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "model_loaded": model is not None, "scaler_loaded": scaler is not None}
+    return {
+        "status": "healthy",
+        "model_loaded": model is not None,
+        "scaler_loaded": scaler is not None
+    }
 
+# ---------------------------------------------------
 # Prediction endpoint
+# ---------------------------------------------------
 @app.post("/predict", response_model=PredictionResponse)
 async def predict_biological_age(biomarkers: BiomarkerInput):
     if model is None or scaler is None:
@@ -66,7 +79,8 @@ async def predict_biological_age(biomarkers: BiomarkerInput):
     
     try:
         start_time = time.time()
-        # Prepare input in correct order (matching the model's expected input)
+
+        # Prepare input in correct order (MUST match training order!)
         input_data = np.array([[
             biomarkers.albumin_gl,
             biomarkers.creatinine_umoll,
@@ -78,24 +92,29 @@ async def predict_biological_age(biomarkers: BiomarkerInput):
             biomarkers.alkp_ul,
             biomarkers.wbc_10_9l,
             biomarkers.chronic_age
+            # ⚠️ if age_years was used in training, add it back here!
         ]])
-        
+
         # Apply scaling
         input_scaled = scaler.transform(input_data)
-        
+
         # Predict
         prediction = model.predict(input_scaled)[0]
         processing_time = time.time() - start_time
-        
+
         return PredictionResponse(
             predicted_biological_age=float(prediction),
             status="Success",
+            model_type=type(model).__name__,   # Auto-detect model name
             processing_time=f"{processing_time:.3f} seconds"
         )
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction error: {str(e)}")
 
+# ---------------------------------------------------
 # Serve the main HTML page
+# ---------------------------------------------------
 @app.get("/", response_class=HTMLResponse)
 async def root():
     try:
@@ -105,5 +124,8 @@ async def root():
     except FileNotFoundError:
         return HTMLResponse(content="<h1>index.html not found</h1>", status_code=404)
 
+# ---------------------------------------------------
+# Run app
+# ---------------------------------------------------
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=10000)
