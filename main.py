@@ -10,7 +10,7 @@ import uvicorn
 import os
 
 # Initialize FastAPI app
-app = FastAPI(title="Phenoage Prediction API", description="Biomarker-based biological age prediction using AI")
+app = FastAPI(title="Phenoage Prediction API", description="Biomarker-based biological age prediction using Aira Mendatory File")
 
 # Mount static files (for CSS, JS, etc. if needed)
 # app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -90,7 +90,6 @@ async def predict_biological_age(biomarkers: BiomarkerInput):
         return PredictionResponse(
             predicted_biological_age=float(prediction),
             status="Success",
-            model_type="LinearRegression",
             processing_time=f"{processing_time:.3f} seconds"
         )
     except Exception as e:
