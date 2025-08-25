@@ -80,7 +80,7 @@ async def predict_biological_age(biomarkers: BiomarkerInput):
     try:
         start_time = time.time()
 
-        # Prepare input in correct order (MUST match training order!)
+        # Prepare input (order MUST match training!)
         input_data = np.array([[
             biomarkers.albumin_gl,
             biomarkers.creatinine_umoll,
@@ -92,22 +92,22 @@ async def predict_biological_age(biomarkers: BiomarkerInput):
             biomarkers.alkp_ul,
             biomarkers.wbc_10_9l,
             biomarkers.chronic_age
-            # ⚠️ if age_years was used in training, add it back here!
         ]])
 
-        # Apply scaling
+        # Scale
         input_scaled = scaler.transform(input_data)
 
         # Predict
         prediction = model.predict(input_scaled)[0]
         processing_time = time.time() - start_time
 
-        return PredictionResponse(
+        response = PredictionResponse(
             predicted_biological_age=float(prediction),
             status="Success",
-            model_type=type(model).__name__,   # Auto-detect model name
+            model_type=type(model).__name__,   # Always included
             processing_time=f"{processing_time:.3f} seconds"
         )
+        return response
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction error: {str(e)}")
