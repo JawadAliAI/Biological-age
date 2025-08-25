@@ -547,8 +547,7 @@
                 document.getElementById('results').style.display = 'block';
                 
                 // Update results
-                document.getElementById('predictedAge').textContent = 
-                    result.predicted_biological_age.toFixed(2) + ' years';
+                document.getElementById("result").textContent = "Prediction: " + data.predicted_biological_age;
                 document.getElementById('status').textContent = result.status;
                 document.getElementById('detailStatus').textContent = result.status;
                 document.getElementById('modelType').textContent = result.model_type;
