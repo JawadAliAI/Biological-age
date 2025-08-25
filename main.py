@@ -55,7 +55,6 @@ class BiomarkerInput(BaseModel):
 class PredictionResponse(BaseModel):
     predicted_biological_age: float
     status: str
-    model_type: str
     processing_time: str
 
 # ---------------------------------------------------
@@ -101,13 +100,11 @@ async def predict_biological_age(biomarkers: BiomarkerInput):
         prediction = model.predict(input_scaled)[0]
         processing_time = time.time() - start_time
 
-        response = PredictionResponse(
+        return PredictionResponse(
             predicted_biological_age=float(prediction),
             status="Success",
-            model_type=type(model).__name__,   # Always included
             processing_time=f"{processing_time:.3f} seconds"
         )
-        return response
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction error: {str(e)}")
