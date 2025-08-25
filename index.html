@@ -547,11 +547,11 @@
                 document.getElementById('results').style.display = 'block';
                 
                 // Update results
-                document.getElementById("result").textContent = "Prediction: " + data.predicted_biological_age;
+                document.getElementById("predictedAge").textContent = result.predicted_biological_age + " years";
                 document.getElementById('status').textContent = result.status;
                 document.getElementById('detailStatus').textContent = result.status;
-                document.getElementById('modelType').textContent = result.model_type;
                 document.getElementById('processingTime').textContent = result.processing_time;
+
                 
                 // Scroll to results
                 document.getElementById('results').scrollIntoView({ 
